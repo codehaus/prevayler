@@ -2,7 +2,6 @@ package org.prevayler.demos.scalability;
 
 import org.prevayler.demos.scalability.prevayler.*;
 import org.prevayler.demos.scalability.jdbc.*;
-import org.prevayler.foundation.serialization.JavaSerializer;
 
 import java.io.*;
 import java.util.*;
@@ -60,7 +59,7 @@ public class Main {
 	}
 
 	static private void runPrevaylerTransaction() throws Exception {
-		PrevaylerTransactionSubject subject = new PrevaylerTransactionSubject(prevaylerTransactionLogDirectory(), prevaylerJournalSerializer());
+		PrevaylerTransactionSubject subject = new PrevaylerTransactionSubject(prevaylerTransactionLogDirectory());
 		new TransactionTestRun(
 			subject,
 			numberOfObjects(),
@@ -121,17 +120,11 @@ public class Main {
 			"#\n" +
 			"# Running the tests with one hundred thousand objects\n" +
 			"# (default option) requires approx. 128MB free RAM.\n" +
-			"# The VM must be started with a sufficient maximum heap\n" +
-			"# size or you will get an OutOfMemoryError.\n" +
-			"#\n" +
+			"# The VM must be started with a sufficient maximum heap" +			"# size or you will get an OutOfMemoryError.\n" +
 			"# Example for Linux and Windows:  java -Xmx128000000 ...\n" +
 			"#\n" +
-			"# (This can be set with the scalability.jvmarg property\n" +
-			"# in build.properties; see sample.build.properties for\n" +
-			"# examples.)\n" +
-			"#\n" +
 			"# Running the tests with one million objects requires\n" +
-			"# approx. 940MB free RAM.\n" +
+			"# approx. 940MB free RAM." +
 			"# Running the tests with ten million objects requires\n" +
 			"# approx. 9.4GB free RAM and a 64bit VM.\n" +
 			"#\n" +
@@ -177,8 +170,6 @@ public class Main {
 			"# TransactionLogDirectory1 = c:\\\\temp\\\\TransactionTest\n" +
 			"# The back-slash (\\) is the escape character so you must\n" +
 			"# use two back-slashes (\\\\).\n" +
-			"\n" +
-			"PrevaylerJournalSerializer = " + JavaSerializer.class.getName() + "\n" +
 			"\n" +
 			"\n" +
 			"###########################################################\n" +
@@ -270,13 +261,6 @@ public class Main {
 	static private String prevaylerTransactionLogDirectory() {
 		String result = property("TransactionLogDirectory");
 		out("\n\nPrevayler TransactionLog Directory: " + result);
-		return result;
-	}
-
-	static private String prevaylerJournalSerializer() {
-		String result = properties.getProperty("PrevaylerJournalSerializer");
-		if (result == null) result = JavaSerializer.class.getName();
-		out("\n\nPrevayler Journal Serializer: " + result);
 		return result;
 	}
 

@@ -1,7 +1,6 @@
 package org.prevayler.demos.scalability.prevayler;
 
 import java.io.File;
-import java.io.PrintStream;
 
 import org.prevayler.PrevaylerFactory;
 //import org.prevayler.implementation.PrevalenceTest;
@@ -19,8 +18,4 @@ public class PrevaylerQuerySubject extends PrevaylerScalabilitySubject {
 	public Object createTestConnection() {
 		return new PrevaylerQueryConnection((QuerySystem)prevayler.prevalentSystem());
 	}
-
-	public void reportResourcesUsed(PrintStream out) {
-	}
-
 }

@@ -4,35 +4,29 @@
 
 package org.prevayler.implementation;
 
-import org.prevayler.Transaction;
-
 import java.io.Serializable;
 import java.util.Date;
 
+import org.prevayler.Transaction;
+
 public class TransactionTimestamp implements Serializable {
 
-    static final long serialVersionUID = 1L;
+    static final long serialVersionUID = 0L;
 
-	private final Transaction _transaction;
-	private final long _systemVersion;
-	private final long _executionTime;
+	private final Transaction transaction;
+	private final long timestamp;
 
-	public TransactionTimestamp(Transaction transaction, long systemVersion, Date executionTime) {
-		_transaction = transaction;
-		_systemVersion = systemVersion;
-		_executionTime = executionTime.getTime();
+	public TransactionTimestamp(Transaction transaction, Date timestamp) {
+		this.transaction = transaction;
+		this.timestamp = timestamp.getTime();
 	}
 
     public Transaction transaction() {
-        return _transaction;
+        return this.transaction;
     }
 
-	public long systemVersion() {
-		return _systemVersion;
-	}
-
-    public Date executionTime() {
-        return new Date(_executionTime);
+    public Date timestamp() {
+        return new Date(this.timestamp);
     }
 
 }

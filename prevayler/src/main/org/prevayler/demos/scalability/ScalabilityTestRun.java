@@ -1,10 +1,8 @@
 package org.prevayler.demos.scalability;
 
-import org.prevayler.foundation.StopWatch;
-
+import java.util.*;
 import java.text.DecimalFormat;
-import java.util.LinkedList;
-import java.util.List;
+import org.prevayler.foundation.*;
 
 /** Represents a single run of a scalability test. To understand the implementation of this class, you must be familiar with Prevayler's Scalability Test (run org.prevayler.test.scalability.ScalabilityTest).
 */
@@ -94,7 +92,6 @@ abstract class ScalabilityTestRun {
 		double operationsPerSecond = (operationCount - initialOperationCount) / secondsEllapsed;
 
 		out("\nMemory used: " + Runtime.getRuntime().totalMemory());
-		subject.reportResourcesUsed(System.out);
 		out("Seconds ellapsed: " + secondsEllapsed);
 		out("--------- Round Result: " + toResultString(operationsPerSecond, threads));
 

@@ -4,18 +4,17 @@
 
 package org.prevayler.implementation.replication;
 
-import org.prevayler.Clock;
-import org.prevayler.Transaction;
-import org.prevayler.implementation.TransactionTimestamp;
-import org.prevayler.implementation.clock.BrokenClock;
-import org.prevayler.implementation.publishing.TransactionPublisher;
-import org.prevayler.implementation.publishing.TransactionSubscriber;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Date;
+
+import org.prevayler.Clock;
+import org.prevayler.Transaction;
+import org.prevayler.implementation.clock.BrokenClock;
+import org.prevayler.implementation.publishing.TransactionPublisher;
+import org.prevayler.implementation.publishing.TransactionSubscriber;
 
 
 /** Reserved for future implementation.
@@ -36,7 +35,7 @@ public class ClientPublisher implements TransactionPublisher {
 	private final ObjectInputStream _fromServer;
 
 
-	public ClientPublisher(String serverIpAddress, int serverPort) throws IOException {
+	public ClientPublisher(String serverIpAddress, int serverPort) throws IOException, ClassNotFoundException {
 		System.out.println("The replication logic is still under development.");
 		Socket socket = new Socket(serverIpAddress, serverPort);
 		_toServer = new ObjectOutputStream(socket.getOutputStream());   // Get the OUTPUT stream first. JDK 1.3.1_01 for Windows will lock up if you get the INPUT stream first.
@@ -128,15 +127,13 @@ public class ClientPublisher implements TransactionPublisher {
 
 		if (transactionCandidate.equals(ServerConnection.CLOCK_TICK)) return;
 
-		long systemVersion = _fromServer.readLong();
-
 		if (transactionCandidate.equals(ServerConnection.REMOTE_TRANSACTION)) {
-			_subscriber.receive(new TransactionTimestamp(_myTransaction, systemVersion, timestamp));
+			_subscriber.receive(_myTransaction, timestamp);
 			notifyMyTransactionMonitor();
 			return;
 		}
 
-		_subscriber.receive(new TransactionTimestamp((Transaction)transactionCandidate, systemVersion, timestamp));
+		_subscriber.receive((Transaction)transactionCandidate, timestamp);
 	}
 
 

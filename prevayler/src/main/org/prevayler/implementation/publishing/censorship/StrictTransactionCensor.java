@@ -1,38 +1,34 @@
 //Prevayler(TM) - The Free-Software Prevalence Layer.
 //Copyright (C) 2001-2003 Klaus Wuestefeld
 //This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//Contributions: Jon Tirsï¿½n.
+//Contributions: Jon Tirsén.
 
 package org.prevayler.implementation.publishing.censorship;
 
 import org.prevayler.Transaction;
-import org.prevayler.foundation.DeepCopier;
-import org.prevayler.foundation.serialization.Serializer;
-import org.prevayler.implementation.PrevalentSystemGuard;
-import org.prevayler.implementation.TransactionTimestamp;
-import org.prevayler.implementation.snapshot.GenericSnapshotManager;
+import org.prevayler.implementation.snapshot.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.Date;
 
 public class StrictTransactionCensor implements TransactionCensor {
 
-	private final PrevalentSystemGuard _king;
-	private PrevalentSystemGuard _royalFoodTaster;
-	private final Serializer _journalSerializer;
-	private final Serializer _snapshotSerializer;
+	private final Object _king;
+	private Object _royalFoodTaster;
+	private final SnapshotManager _snapshotManager;
 
-	public StrictTransactionCensor(GenericSnapshotManager snapshotManager, Serializer journalSerializer) {
-		_king = snapshotManager.recoveredPrevalentSystem();
-		// The _royalFoodTaster cannot be initialized here, or else the pending transactions will not be applied to it.
-		_journalSerializer = journalSerializer;
-		_snapshotSerializer = snapshotManager.primarySerializer();
+	
+	public StrictTransactionCensor(SnapshotManager snapshotManager) {
+		_snapshotManager = snapshotManager;
+		_king = _snapshotManager.recoveredPrevalentSystem();
+		//The _royalFoodTaster cannot be initialized here, or else the pending transactions will not be applied to it.
 	}
 
-	public void approve(Transaction transaction, long systemVersion, Date executionTime) throws RuntimeException, Error {
+	public void approve(Transaction transaction, Date executionTime) throws RuntimeException, Error {
 		try {
-			Transaction transactionCopy = deepCopy(transaction);
-			PrevalentSystemGuard royalFoodTaster = royalFoodTaster(systemVersion - 1);
-			royalFoodTaster.receive(new TransactionTimestamp(transactionCopy, systemVersion, executionTime));
+			Transaction transactionCopy = (Transaction)_snapshotManager.deepCopy(transaction, "Unable to produce a copy of the transaction for trying out before applying it to the real system.");
+			transactionCopy.executeOn(royalFoodTaster(), executionTime);
 		} catch (RuntimeException rx) {
 			letTheFoodTasterDie();
 			throw rx;
@@ -42,27 +38,20 @@ public class StrictTransactionCensor implements TransactionCensor {
 		}
 	}
 
-	private Transaction deepCopy(Transaction transaction) {
-		try {
-			return (Transaction)DeepCopier.deepCopy(transaction, _journalSerializer);
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			throw new RuntimeException("Unable to produce a copy of the transaction for trying out before applying it to the real system.");
-		}
-	}
-
 	private void letTheFoodTasterDie() {
-		_royalFoodTaster = null;  // At this moment there might be transactions that have already been approved by this censor but have not yet been applied to the _king. It is a requirement, therefore, that the _royalFoodTaster must not be initialized now, but only when the next transaction arrives to be approved.
+		_royalFoodTaster = null; // Producing the new food taster now could avoid the next transaction having to wait for its lazy evaluation. Trying to serialize the whole system in RAM right after an OutOfMemoryError has been thrown, for example, isn't a very good idea, though. In that case, there probably will not even be a next transaction...  ;)
 	}
 
-	private PrevalentSystemGuard royalFoodTaster(long systemVersion) {
-		if (_royalFoodTaster == null) produceNewFoodTaster(systemVersion);
+	private Object royalFoodTaster() {
+		if (_royalFoodTaster == null) produceNewFoodTaster();
 		return _royalFoodTaster;
 	}
 
-	private void produceNewFoodTaster(long systemVersion) {
+	private void produceNewFoodTaster() {
 		try {
-			_royalFoodTaster = _king.deepCopy(systemVersion, _snapshotSerializer);
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			synchronized (_king) { _snapshotManager.writeSnapshot(_king, out); }
+			_royalFoodTaster = _snapshotManager.readSnapshot(new ByteArrayInputStream(out.toByteArray()));
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			throw new RuntimeException("Unable to produce a copy of the prevalent system for trying out transactions before applying them to the real system.");

@@ -1,19 +1,17 @@
+//Prevayler(TM) - The Free-Software Prevalence Layer.
+//Copyright (C) 2001 Klaus Wuestefeld
+//This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 package org.prevayler.foundation;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
 public class FileManager {
 
-	public static File produceDirectory(String directoryPath) throws IOException {
-		File directory = new File(directoryPath);
-		produceDirectory(directory);
+	static public File produceDirectory(String directoryName) throws IOException {
+		File directory = new File(directoryName);
+		if (!directory.exists() && !directory.mkdirs()) throw new IOException("Directory doesn't exist and could not be created: " + directoryName);
+		if (!directory.isDirectory()) throw new IOException("Path exists but is not a directory: " + directoryName);
 		return directory;
 	}
-
-	public static void produceDirectory(File directory) throws IOException {
-		if (!directory.exists() && !directory.mkdirs()) throw new IOException("Directory doesn't exist and could not be created: " + directory);
-		if (!directory.isDirectory()) throw new IOException("Path exists but is not a directory: " + directory);
-	}
-
 }

@@ -4,17 +4,12 @@
 
 package org.prevayler.implementation.replication;
 
-import org.prevayler.Transaction;
-import org.prevayler.implementation.TransactionTimestamp;
-import org.prevayler.implementation.publishing.POBox;
-import org.prevayler.implementation.publishing.TransactionPublisher;
-import org.prevayler.implementation.publishing.TransactionSubscriber;
-
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.util.Date;
+
+import org.prevayler.Transaction;
+import org.prevayler.implementation.publishing.*;
 
 
 /** Reserved for future implementation.
@@ -88,20 +83,14 @@ class ServerConnection extends Thread implements TransactionSubscriber {
 	}
 
 
-	public void receive(TransactionTimestamp transactionTimstamp) {
-		Transaction transaction = transactionTimstamp.transaction();
-		long systemVersion = transactionTimstamp.systemVersion();
-		Date executionTime = transactionTimstamp.executionTime();
-
+	public void receive(Transaction transaction, Date timestamp) {
 		try {
 			synchronized (_toRemote) {
 				_toRemote.writeObject(transaction == _remoteTransaction
 					? (Object)REMOTE_TRANSACTION
 					: transaction
 				);
-				_toRemote.writeObject(executionTime);
-				_toRemote.writeLong(systemVersion);
-				_toRemote.flush();
+				_toRemote.writeObject(timestamp);
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
