@@ -7,11 +7,6 @@ package org.prevayler.implementation;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import junit.framework.Test;
-import org.prevayler.implementation.snapshot.GenericSnapshotManagerTest;
-import org.prevayler.foundation.ChunkingTest;
-import org.prevayler.foundation.DurableOutputStreamTest;
-import org.prevayler.foundation.FileLockerTest;
-import org.prevayler.foundation.gzip.MultiMemberGZIPTest;
 
 public class Suite extends TestCase {
 	public static Test suite() {
@@ -20,19 +15,11 @@ public class Suite extends TestCase {
 		suite.addTestSuite(TransientPrevaylerTest.class);
 		suite.addTestSuite(QueryExecutionTest.class);
 		suite.addTestSuite(PersistenceTest.class);
-		suite.addTestSuite(JournalFileRollingTest.class);
-		suite.addTestSuite(SkipOldTransactionsTest.class);
-		suite.addTestSuite(HideTransactionWithQueryExecuterFromSerializersTest.class);
-		suite.addTestSuite(ChunkingTest.class);
+		suite.addTestSuite(LogFileRollingTest.class);
 		suite.addTestSuite(CheckpointTest.class);
 		suite.addTestSuite(RollbackTest.class);
 		suite.addTestSuite(ReplicationTest.class);
 		suite.addTestSuite(DurableOutputStreamTest.class);
-		suite.addTestSuite(GenericSnapshotManagerTest.class);
-		suite.addTestSuite(JournalSerializerTest.class);
-		suite.addTestSuite(SnapshotSerializerTest.class);
-		suite.addTestSuite(MultiMemberGZIPTest.class);
-		suite.addTestSuite(FileLockerTest.class);
 		return suite;
 	}
 }

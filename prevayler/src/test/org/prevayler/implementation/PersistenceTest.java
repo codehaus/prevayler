@@ -9,10 +9,9 @@ import java.io.IOException;
 
 import org.prevayler.Prevayler;
 import org.prevayler.PrevaylerFactory;
-import org.prevayler.foundation.*;
 import org.prevayler.foundation.FileManager;
 
-public class PersistenceTest extends FileIOTest {
+public class PersistenceTest extends PrevalenceTest {
 
 	private Prevayler _prevayler;
 	private String _prevalenceBase;
@@ -51,11 +50,11 @@ public class PersistenceTest extends FileIOTest {
 		snapshot();
 		_prevayler.close();
 		File lastSnapshot =   new File(_prevalenceBase, "0000000000000000008.snapshot");
-		File lastTransactionLog =   new File(_prevalenceBase, "0000000000000000008.journal");
+		File lastTransactionLog =   new File(_prevalenceBase, "0000000000000000008.transactionLog");
 		newPrevalenceBase();
-		new FileManager(_prevalenceBase).produceDirectory();
+		FileManager.produceDirectory(_prevalenceBase);
 		lastSnapshot.renameTo(new File(_prevalenceBase, "0000000000000000008.snapshot"));  //Moving the file.
-		lastTransactionLog.renameTo(new File(_prevalenceBase, "0000000000000000008.journal"));
+		lastTransactionLog.renameTo(new File(_prevalenceBase, "0000000000000000008.transactionLog"));
 
 		crashRecover();
 		append("i","abcdefghi");

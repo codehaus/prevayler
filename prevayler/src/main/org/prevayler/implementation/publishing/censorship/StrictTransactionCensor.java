@@ -1,37 +1,33 @@
 //Prevayler(TM) - The Free-Software Prevalence Layer.
 //Copyright (C) 2001-2003 Klaus Wuestefeld
 //This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//Contributions: Jon Tirsï¿½n.
+//Contributions: Jon Tirsén.
 
 package org.prevayler.implementation.publishing.censorship;
 
 import org.prevayler.Transaction;
-import org.prevayler.foundation.DeepCopier;
-import org.prevayler.foundation.serialization.Serializer;
-import org.prevayler.implementation.snapshot.GenericSnapshotManager;
-import org.prevayler.implementation.TransactionWithQueryExecuter;
+import org.prevayler.implementation.snapshot.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.Date;
 
 public class StrictTransactionCensor implements TransactionCensor {
 
 	private final Object _king;
 	private Object _royalFoodTaster;
-	private final GenericSnapshotManager _snapshotManager;
+	private final SnapshotManager _snapshotManager;
 
-	private final Serializer _journalSerializer;
-
-
-	public StrictTransactionCensor(GenericSnapshotManager snapshotManager, Serializer journalSerializer) {
+	
+	public StrictTransactionCensor(SnapshotManager snapshotManager) {
 		_snapshotManager = snapshotManager;
-		_journalSerializer = journalSerializer;
 		_king = _snapshotManager.recoveredPrevalentSystem();
 		//The _royalFoodTaster cannot be initialized here, or else the pending transactions will not be applied to it.
 	}
 
 	public void approve(Transaction transaction, Date executionTime) throws RuntimeException, Error {
 		try {
-			Transaction transactionCopy = deepCopy(transaction);
+			Transaction transactionCopy = (Transaction)_snapshotManager.deepCopy(transaction, "Unable to produce a copy of the transaction for trying out before applying it to the real system.");
 			transactionCopy.executeOn(royalFoodTaster(), executionTime);
 		} catch (RuntimeException rx) {
 			letTheFoodTasterDie();
@@ -39,15 +35,6 @@ public class StrictTransactionCensor implements TransactionCensor {
 		} catch (Error error) {
 			letTheFoodTasterDie();
 			throw error;
-		}
-	}
-
-	private Transaction deepCopy(Transaction transaction) {
-		try {
-			return TransactionWithQueryExecuter.wrap(DeepCopier.deepCopy(TransactionWithQueryExecuter.strip(transaction), _journalSerializer));
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			throw new RuntimeException("Unable to produce a copy of the transaction for trying out before applying it to the real system.");
 		}
 	}
 
@@ -62,9 +49,9 @@ public class StrictTransactionCensor implements TransactionCensor {
 
 	private void produceNewFoodTaster() {
 		try {
-			synchronized (_king) {
-				_royalFoodTaster = DeepCopier.deepCopy(_king, _snapshotManager.primarySerializer());
-			}
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			synchronized (_king) { _snapshotManager.writeSnapshot(_king, out); }
+			_royalFoodTaster = _snapshotManager.readSnapshot(new ByteArrayInputStream(out.toByteArray()));
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			throw new RuntimeException("Unable to produce a copy of the prevalent system for trying out transactions before applying them to the real system.");
