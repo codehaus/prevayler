@@ -1,16 +1,14 @@
 //Prevayler(TM) - The Free-Software Prevalence Layer.
-//Copyright (C) 2001-2004 Klaus Wuestefeld
+//Copyright (C) 2001-2003 Klaus Wuestefeld
 //This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//Contributions: Alexandre Nodari, Jacob Kjome.
+//Contributions: Alexandre Nodari
 
 package org.prevayler.implementation.snapshot;
-
 import java.io.*;
 
 import javax.xml.transform.stream.*;
 
 import com.skaringa.javaxml.*;
-
 
 /**
  * Writes and reads snapshots to/from XML files.
@@ -31,28 +29,12 @@ import com.skaringa.javaxml.*;
  * everything mentioned above on the classpath.</p>
  *
  * @see org.prevayler.implementation.snapshot.SnapshotManager
- * @see org.prevayler.implementation.snapshot.AbstractSnapshotManager
  */
-public class SkaringaSnapshotManager extends AbstractSnapshotManager {
+public class XmlSnapshotManager extends SnapshotManager {
 
-	public SkaringaSnapshotManager(Object newPrevalentSystem, String snapshotDirectoryName) throws ClassNotFoundException, IOException {
+
+	public XmlSnapshotManager(Object newPrevalentSystem, String snapshotDirectoryName) throws ClassNotFoundException, IOException {
 		super(newPrevalentSystem, snapshotDirectoryName);
-	}
-
-
-    /**
-	 * @see org.prevayler.implementation.snapshot.SnapshotManager#writeSnapshot(Object, OutputStream)
-	 */
-	public void writeSnapshot(Object prevalentSystem, OutputStream out) throws IOException {
-		StreamResult result = new StreamResult(out);
-		try {
-			transformer().serialize(prevalentSystem, result);
-		} catch (SerializerException se) {
-			throw new IOException("Unable to serialize with Skaringa: " + se.getMessage());
-		} finally {
-			OutputStream stream = result.getOutputStream(); 
-            if (stream != null) stream.close();
-		}
 	}
 
 
@@ -66,17 +48,31 @@ public class SkaringaSnapshotManager extends AbstractSnapshotManager {
 		} catch (DeserializerException de) {
 			throw new IOException("Unable to deserialize with Skaringa: " + de.getMessage());
 		} finally {
-            InputStream stream = source.getInputStream(); 
-			if (stream != null) stream.close();
+			source.getInputStream().close();
 		}
 	}
 
 
 	/**
-	 * @see org.prevayler.implementation.snapshot.AbstractSnapshotManager#suffix()
+	 * @see org.prevayler.implementation.snapshot.SnapshotManager#suffix()
 	 */
 	protected String suffix() {
-		return "skaringasnapshot";
+		return "xml";
+	}
+
+
+	/**
+	 * @see org.prevayler.implementation.snapshot.SnapshotManager#writeSnapshot(Object, OutputStream)
+	 */
+	public void writeSnapshot(Object prevalentSystem, OutputStream out) throws IOException {
+		StreamResult result = new StreamResult(out);
+		try {
+			transformer().serialize(prevalentSystem, result);
+		} catch (SerializerException se) {
+			throw new IOException("Unable to serialize with Skaringa: " + se.getMessage());
+		} finally {
+			result.getOutputStream().close();
+		}
 	}
 
 
@@ -92,5 +88,4 @@ public class SkaringaSnapshotManager extends AbstractSnapshotManager {
 			throw new IOException("Unable to start Skaringa: " + nie.getMessage());
 		}
 	}
-
 }

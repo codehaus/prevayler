@@ -21,7 +21,6 @@ import org.prevayler.implementation.replication.ServerListener;
 import org.prevayler.implementation.replication.ClientPublisher;
 import org.prevayler.implementation.snapshot.NullSnapshotManager;
 import org.prevayler.implementation.snapshot.SnapshotManager;
-import org.prevayler.implementation.snapshot.JavaSnapshotManager;
 
 /** Provides easy access to all Prevayler configurations and implementations available in this distribution.
  * Static methods are also provided as short-cuts for the most common configurations. 
@@ -214,7 +213,7 @@ public class PrevaylerFactory {
 	}
 
 
-	private TransactionLogger logger() throws IOException {
+	private TransactionLogger logger() throws IOException, ClassNotFoundException {
 		return _transientMode
 			? (TransactionLogger)new TransientLogger()
 			: new PersistentLogger(prevalenceBase(), _transactionLogSizeThreshold, _transactionLogAgeThreshold);		
@@ -224,7 +223,7 @@ public class PrevaylerFactory {
 	private SnapshotManager snapshotManager() throws ClassNotFoundException, IOException {
 		return _snapshotManager != null
 			? _snapshotManager
-			: new JavaSnapshotManager(prevalentSystem(), prevalenceBase());
+			: new SnapshotManager(prevalentSystem(), prevalenceBase());
 	}
 
 

@@ -72,10 +72,6 @@ public class ClusteredPrevayler implements Prevayler, ClusterListener {
         throw new UnsupportedOperationException("Not implemented");
     }
 
-    public Object execute(SureTransactionWithQuery sureTransactionWithQuery) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
     public void takeSnapshot() throws IOException {
         prevayler.takeSnapshot();
     }

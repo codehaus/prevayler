@@ -14,7 +14,7 @@ public class DurableOutputStreamTest extends FileIOTest {
 
 	public void testSingleThreaded() throws Exception {
 		for (int i = 0; i < 10 /*5000*/; i++) {
-//            System.out.println("i=" + i);
+//          System.out.println("i=" + i);
 
 			File file = new File(_testDirectory, "stream" + i + ".bin");
 
