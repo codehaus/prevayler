@@ -7,11 +7,6 @@ package org.prevayler.implementation;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import junit.framework.Test;
-import org.prevayler.implementation.snapshot.XStreamSnapshotManagerTest;
-import org.prevayler.implementation.snapshot.JavaSnapshotManagerTest;
-import org.prevayler.implementation.snapshot.SkaringaSnapshotManagerTest;
-import org.prevayler.foundation.DurableOutputStreamTest;
-import org.prevayler.foundation.serialization.XStreamSerializationTest;
 
 public class Suite extends TestCase {
 	public static Test suite() {
@@ -20,16 +15,11 @@ public class Suite extends TestCase {
 		suite.addTestSuite(TransientPrevaylerTest.class);
 		suite.addTestSuite(QueryExecutionTest.class);
 		suite.addTestSuite(PersistenceTest.class);
-		suite.addTestSuite(JournalFileRollingTest.class);
+		suite.addTestSuite(LogFileRollingTest.class);
 		suite.addTestSuite(CheckpointTest.class);
 		suite.addTestSuite(RollbackTest.class);
 		suite.addTestSuite(ReplicationTest.class);
 		suite.addTestSuite(DurableOutputStreamTest.class);
-		suite.addTestSuite(XStreamSnapshotManagerTest.class);
-		suite.addTestSuite(JavaSnapshotManagerTest.class);
-		suite.addTestSuite(SkaringaSnapshotManagerTest.class);
-		suite.addTestSuite(JournalSerializationStrategyTest.class);
-		suite.addTestSuite(XStreamSerializationTest.class);
 		return suite;
 	}
 }

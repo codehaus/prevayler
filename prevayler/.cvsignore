@@ -9,7 +9,3 @@ log4j.xml
 maven.log
 build.dot
 build.png
-demo*
-Test*
-ScalabilityTest*
-Query*

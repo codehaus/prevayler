@@ -1,5 +1,4 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="./ant2html.xsl"?> 
 <!DOCTYPE project [
     <!ENTITY general-utility-targets SYSTEM "file:./utility-targets.incl">
     <!ENTITY self-customized-targets SYSTEM "file:./custom-targets.incl">
@@ -54,12 +53,8 @@
 
     <path id="build.classpath" >
         <pathelement location="${skaringa.jar}"/>
-        <pathelement location="${xstream.jar}"/>
-        <pathelement location="${xpp3.jar}"/>
         <pathelement location="${jgroups.jar}"/>
         <pathelement location="${log4j.jar}"/>
-        <pathelement location="${jaxen.jar}"/>
-        <pathelement location="${ognl.jar}"/>
         <pathelement location="${commons-jxpath.jar}"/>
         <pathelement location="${commons-logging.jar}"/>
         <pathelement location="${xml-apis.jar}"/> <!-- Not required under j2sdk1.4.x. Here to run xml demo under JDK1.3.x -->
@@ -185,7 +180,7 @@
         </antcall>
         <!-- advanced -->
         <antcall target="-javadoc.sub">
-            <param name="jdocincludes"   value="org/prevayler, org/prevayler/implementation/**, org/prevayler/foundation/serialization/**" />
+            <param name="jdocincludes"   value="org/prevayler, org/prevayler/implementation/**" />
             <param name="jdocsourcepath" value="${srcdir.main}" />
             <param name="jdocdestdir"    value="${docdir}/api/advanced" />
         </antcall>
@@ -340,20 +335,8 @@
             description="Download binary packages needed by the core packages" >
         <!-- Download any sub package or tools needed. -->
         <antcall target="-downloadgz">
-            <param name="sourcefile" value="${log4j.loc}"/>
-            <param name="destfile"   value="${log4j.jar}"/>
-        </antcall>
-        <antcall target="-downloadgz">
             <param name="sourcefile" value="${skaringa.loc}"/>
             <param name="destfile"   value="${skaringa.jar}"/>
-        </antcall>
-        <antcall target="-downloadfile">
-            <param name="sourcefile" value="${xstream.loc}"/>
-            <param name="destfile"   value="${xstream.jar}"/>
-        </antcall>
-        <antcall target="-downloadfile">
-            <param name="sourcefile" value="${xpp3.loc}"/>
-            <param name="destfile"   value="${xpp3.jar}"/>
         </antcall>
     </target>
     <target name="download.dependencies.test"
@@ -363,14 +346,6 @@
     <target name="download.dependencies.contrib"
             description="Download binary packages needed by the contrib packages" >
         <!-- Download any sub package or tools needed. -->
-        <antcall target="-downloadfile">
-            <param name="sourcefile" value="${jaxen.loc}"/>
-            <param name="destfile"   value="${jaxen.jar}"/>
-        </antcall>
-        <antcall target="-downloadfile">
-            <param name="sourcefile" value="${ognl.loc}"/>
-            <param name="destfile"   value="${ognl.jar}"/>
-        </antcall>
         <antcall target="-downloadgz">
             <param name="sourcefile" value="${commons-jxpath.loc}"/>
             <param name="destfile"   value="${commons-jxpath.jar}"/>
@@ -383,6 +358,10 @@
     <target name="download.dependencies.runtime"
             description="Download binary packages needed only at runtime" >
         <!-- Download any sub package or tools needed. -->
+        <antcall target="-downloadgz">
+            <param name="sourcefile" value="${log4j.loc}"/>
+            <param name="destfile"   value="${log4j.jar}"/>
+        </antcall>
         <antcall target="-downloadgz">
             <param name="sourcefile" value="${commons-logging.loc}"/>
             <param name="destfile"   value="${commons-logging.jar}"/>
@@ -433,15 +412,7 @@
 
     <target name="run.demo.bank.skaringa" depends="compile.core, -demo.init"
             description="Same as simple bank demo, but uses Skaringa xml serialization" >
-        <java dir="${cachedir.demo}" fork="true" classname="org.prevayler.demos.demo2.MainSkaringa" >
-            <classpath refid="build.run.classpath" />
-            <sysproperty key="${log4j.system.variable.name}" value="${log4j.log.path}" />
-        </java>
-    </target>
-
-    <target name="run.demo.bank.xstream" depends="compile.core, -demo.init"
-            description="Same as simple bank demo, but uses XStream xml serialization" >
-        <java dir="${cachedir.demo}" fork="true" classname="org.prevayler.demos.demo2.MainXStream" >
+        <java dir="${cachedir.demo}" fork="true" classname="org.prevayler.demos.demo2.MainXml" >
             <classpath refid="build.run.classpath" />
             <sysproperty key="${log4j.system.variable.name}" value="${log4j.log.path}" />
         </java>
