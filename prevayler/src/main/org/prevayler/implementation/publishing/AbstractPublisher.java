@@ -5,10 +5,8 @@
 
 package org.prevayler.implementation.publishing;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
 
 import org.prevayler.Clock;
 import org.prevayler.Transaction;
@@ -30,7 +28,7 @@ public abstract class AbstractPublisher implements TransactionPublisher {
         return _clock;
     }
 
-    public synchronized void addSubscriber(TransactionSubscriber subscriber) {
+    public synchronized void addSubscriber(TransactionSubscriber subscriber) throws IOException, ClassNotFoundException {
 		_subscribers.add(subscriber);
     }
 

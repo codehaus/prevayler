@@ -1,49 +1,38 @@
 //Prevayler(TM) - The Free-Software Prevalence Layer.
-//Copyright (C) 2001-2004 Klaus Wuestefeld
+//Copyright (C) 2001-2003 Klaus Wuestefeld
 //This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//Contributions: Carlos Villela.
 
 package org.prevayler.foundation;
 
-import java.io.EOFException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectStreamException;
-import java.io.UTFDataFormatException;
-
-import org.prevayler.foundation.monitor.*;
-
+import java.io.*;
 
 public class SimpleInputStream {
 
 	private final File _file;
 	private final ObjectInputStream _delegate;
 	private boolean _EOF = false;
-    private Monitor _monitor;
 
 
-	public SimpleInputStream(File file, ClassLoader loader, Monitor monitor) throws IOException {
-	    _monitor = monitor;
+	public SimpleInputStream(File file) throws IOException {
+		System.out.println("Reading " + file + "...");
 		_file = file;
-		_delegate = new ObjectInputStreamWithClassLoader(new FileInputStream(file), loader);
+		_delegate = new ObjectInputStream(new FileInputStream(file));
 	}
 
 
 	public Object readObject() throws IOException, ClassNotFoundException {
-        if (_EOF) throw new EOFException();
+		if (_EOF) throw new EOFException();
 
 		try {
 			return _delegate.readObject();
 		} catch (EOFException eofx) {
 			// Do nothing.
 		} catch (ObjectStreamException scx) {
-			ignoreStreamCorruption(scx);
+			message(scx);
 		} catch (UTFDataFormatException utfx) {
-			ignoreStreamCorruption(utfx);
+			message(utfx);
 		} catch (RuntimeException rx) {   //Some stream corruptions cause runtime exceptions in JDK1.3.1!
-			ignoreStreamCorruption(rx);
+			message(rx);
 		}
 
 		_delegate.close();
@@ -52,14 +41,18 @@ public class SimpleInputStream {
 	}
 
 
-	private void ignoreStreamCorruption(Exception ex) {
-		String message = "Stream corruption found while reading a transaction from the journal. If this is a transaction that was being written when a system crash occurred, there is no problem because it was never executed on the Prevalent System. Before executing each transaction, Prevayler writes it to the journal and calls the java.io.FileDescritor.sync() method to instruct the Java API to physically sync all operating system RAM buffers to disk.";
-		_monitor.notify(this.getClass(), message, _file, ex);
-	}
-
-
 	public void close() throws IOException {
 		_delegate.close();
 		_EOF = true;
+	}
+
+	private void message(Exception exception) {
+		System.out.println(
+			"\n" + exception + " (File: " + _file + ")" +
+			"\n   The above is a stream corruption that can be caused by:" +
+			"\n      - A system crash while writing to the file (that is OK)." +
+			"\n      - A corruption in the file system (that is NOT OK)." +
+			"\n      - Tampering with the file (that is NOT OK)."
+		);
 	}
 }
