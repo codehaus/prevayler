@@ -24,3 +24,5 @@
 #DEFAULT (echo ""; id; echo %s; date; cat) >> $CVSROOT/CVSROOT/commitlog
 # or
 #DEFAULT (echo ""; id; echo %{sVv}; date; cat) >> $CVSROOT/CVSROOT/commitlog
+ALL /usr/local/ruby/bin/ruby /home/rinkrank/cvsspam/collect_diffs.rb --to prevayler-coders@lists.sourceforge.net %{sVv}
+ALL cat $CVSROOT/CVSROOT/damagecontrol-prevayler.conf | nc builds.codehaus.org 4711
