@@ -15,7 +15,6 @@ public class Suite extends TestCase {
 		suite.addTestSuite(TransientPrevaylerTest.class);
 		suite.addTestSuite(QueryExecutionTest.class);
 		suite.addTestSuite(PersistenceTest.class);
-		suite.addTestSuite(LogFileRollingTest.class);
 		suite.addTestSuite(CheckpointTest.class);
 		suite.addTestSuite(RollbackTest.class);
 		suite.addTestSuite(ReplicationTest.class);

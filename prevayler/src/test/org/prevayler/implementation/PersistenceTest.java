@@ -9,10 +9,9 @@ import java.io.IOException;
 
 import org.prevayler.Prevayler;
 import org.prevayler.PrevaylerFactory;
-import org.prevayler.foundation.*;
 import org.prevayler.foundation.FileManager;
 
-public class PersistenceTest extends FileIOTest {
+public class PersistenceTest extends PrevalenceTest {
 
 	private Prevayler _prevayler;
 	private String _prevalenceBase;
@@ -106,7 +105,7 @@ public class PersistenceTest extends FileIOTest {
 
 
 	private void newPrevalenceBase() throws Exception {
-		_prevalenceBase = _testDirectory + File.separator + System.currentTimeMillis();
+		_prevalenceBase = _testDirectory + "\\" + System.currentTimeMillis();
 	}
 
 

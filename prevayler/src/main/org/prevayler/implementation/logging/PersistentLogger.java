@@ -14,7 +14,6 @@ import org.prevayler.Transaction;
 import org.prevayler.foundation.FileManager;
 import org.prevayler.foundation.SimpleInputStream;
 import org.prevayler.foundation.DurableOutputStream;
-import org.prevayler.foundation.StopWatch;
 import org.prevayler.foundation.Turn;
 import org.prevayler.implementation.*;
 import org.prevayler.implementation.publishing.TransactionSubscriber;
@@ -26,32 +25,24 @@ public class PersistentLogger implements FileFilter, TransactionLogger {
 
 	private final File _directory;
 	private DurableOutputStream _outputLog;
-
-	private final long _logSizeThresholdInBytes;
-	private final long _logAgeThresholdInMillis;
-	private StopWatch _logAgeTimer;
 	
 	private long _nextTransaction;
 	private final Object _nextTransactionMonitor = new Object();
 	private boolean _nextTransactionInitialized = false;
 
 
-	/**
-	 * @param directory Where transactionLog files will be read and written.
-	 * @param logSizeThresholdInBytes Size of the current transactionLog file beyond which it is closed and a new one started. Zero indicates no size threshold. This is useful transactionLog backup purposes.
-	 * @param logAgeThresholdInMillis Age of the current transactionLog file beyond which it is closed and a new one started. Zero indicates no age threshold. This is useful transactionLog backup purposes.
-	 */
-	public PersistentLogger(String directory, long logSizeThresholdInBytes, long logAgeThresholdInMillis) throws IOException {
+	public PersistentLogger(String directory) throws IOException, ClassNotFoundException {
 		_directory = FileManager.produceDirectory(directory);
-		_logSizeThresholdInBytes = logSizeThresholdInBytes;
-		_logAgeThresholdInMillis = logAgeThresholdInMillis;
 	}
 
 
 	public void log(Transaction transaction, Date executionTime, Turn myTurn) {
 		if (!_nextTransactionInitialized) throw new IllegalStateException("TransactionLogger.update() has to be called at least once before TransactionLogger.log().");
 
-		prepareOutputLog();
+		synchronized (_nextTransactionMonitor) {
+			if (_outputLog == null) createNewOutputLog(_nextTransaction);   //TODO Create new output log when size threshold surpassed or age expires.
+			_nextTransaction++;  //The transaction count is increased but, because of thread concurrency, it is not guaranteed that this transaction is the _nextTransaction'th transaction, so don't trust that. It is myTurn that will guarantee execution in the correct order.
+		}
 		try {
 			_outputLog.sync(new TransactionTimestamp(transaction, executionTime), myTurn);
 		} catch (IOException iox) {
@@ -60,39 +51,10 @@ public class PersistentLogger implements FileFilter, TransactionLogger {
 	}
 
 
-	private void prepareOutputLog() {
-		synchronized (_nextTransactionMonitor) {
-			if (!isOutputLogValid()) createNewOutputLog(_nextTransaction);   //TODO Create new output log when size threshold surpassed or age expires.
-			_nextTransaction++;  //The transaction count is increased but, because of thread concurrency, it is not guaranteed that this transaction is the _nextTransaction'th transaction, so don't trust that. It is myTurn that will guarantee execution in the correct order.
-		}
-	}
-
-
-	private boolean isOutputLogValid() {
-		return _outputLog != null
-			&& !isOutputLogTooBig() 
-			&& !isOutputLogTooOld();
-	}
-
-
-	private boolean isOutputLogTooOld() {
-		return _logAgeThresholdInMillis != 0
-			&& _logAgeTimer.millisEllapsed() >= _logAgeThresholdInMillis;
-	}
-
-
-	private boolean isOutputLogTooBig() {
-		return _logSizeThresholdInBytes != 0
-			&& _outputLog.file().length() >= _logSizeThresholdInBytes;
-	}
-
-
 	private void createNewOutputLog(long transactionNumber) {
 		File file = transactionLogFile(transactionNumber);
 		try {
-			if (_outputLog != null) _outputLog.close();
 			_outputLog = new DurableOutputStream(file);
-			_logAgeTimer = StopWatch.start();
 		} catch (IOException iox) {
 			handleExceptionWhileCreating(iox, file);
 		}
@@ -142,32 +104,24 @@ public class PersistentLogger implements FileFilter, TransactionLogger {
 
 	private long recoverPendingTransactions(TransactionSubscriber subscriber, long initialTransaction, long initialLogFile)	throws IOException, ClassNotFoundException {
 		long recoveringTransaction = initialLogFile;
-		File logFile = transactionLogFile(recoveringTransaction);
-		SimpleInputStream inputLog = new SimpleInputStream(logFile);
-
+		
+		SimpleInputStream inputLog = new SimpleInputStream(transactionLogFile(recoveringTransaction));
 		while(true) {
 			try {
 				TransactionTimestamp entry = (TransactionTimestamp)inputLog.readObject();
 		
 				if (recoveringTransaction >= initialTransaction)
-					subscriber.receive(entry.transaction(), entry.timestamp());
+					subscriber.receive(entry.transaction, entry.timestamp);
 		
 				recoveringTransaction++;
 		
 			} catch (EOFException eof) {
-				File nextFile = transactionLogFile(recoveringTransaction);
-				if (logFile.equals(nextFile)) renameUnusedFile(logFile);  //The first transaction in this log file is incomplete. We need to reuse this file name.
-				logFile = nextFile;
+				File logFile = transactionLogFile(recoveringTransaction);
 				if (!logFile.exists()) break;
 				inputLog = new SimpleInputStream(logFile);
 			}
 		}
 		return recoveringTransaction;
-	}
-
-
-	private void renameUnusedFile(File logFile) {
-		logFile.renameTo(new File(logFile.getAbsolutePath() + ".unusedFile" + System.currentTimeMillis()));
 	}
 
 

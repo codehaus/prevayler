@@ -21,7 +21,6 @@ import org.prevayler.implementation.replication.ServerListener;
 import org.prevayler.implementation.replication.ClientPublisher;
 import org.prevayler.implementation.snapshot.NullSnapshotManager;
 import org.prevayler.implementation.snapshot.SnapshotManager;
-import org.prevayler.implementation.snapshot.JavaSnapshotManager;
 
 /** Provides easy access to all Prevayler configurations and implementations available in this distribution.
  * Static methods are also provided as short-cuts for the most common configurations. 
@@ -40,9 +39,6 @@ public class PrevaylerFactory {
 	private String _prevalenceBase;
 	private SnapshotManager _snapshotManager;
 
-	private long _transactionLogSizeThreshold;
-	private long _transactionLogAgeThreshold;
-	
 	private int _serverPort = -1;
 	private String _remoteServerIpAddress;
 	private int _remoteServerPort;
@@ -214,27 +210,17 @@ public class PrevaylerFactory {
 	}
 
 
-	private TransactionLogger logger() throws IOException {
+	private TransactionLogger logger() throws IOException, ClassNotFoundException {
 		return _transientMode
 			? (TransactionLogger)new TransientLogger()
-			: new PersistentLogger(prevalenceBase(), _transactionLogSizeThreshold, _transactionLogAgeThreshold);		
+			: new PersistentLogger(prevalenceBase());		
 	}
 
 
 	private SnapshotManager snapshotManager() throws ClassNotFoundException, IOException {
 		return _snapshotManager != null
 			? _snapshotManager
-			: new JavaSnapshotManager(prevalentSystem(), prevalenceBase());
-	}
-
-
-	public void configureTransactionLogFileSizeThreshold(long sizeInBytes) {
-		_transactionLogSizeThreshold = sizeInBytes;
-	}
-
-	
-	public void configureTransactionLogFileAgeThreshold(long ageInMilliseconds) {
-		_transactionLogAgeThreshold = ageInMilliseconds;
+			: new SnapshotManager(prevalentSystem(), prevalenceBase());
 	}
 
 }

@@ -5,13 +5,11 @@
 package org.prevayler.implementation;
 
 import java.io.IOException;
-import java.io.File;
 
 import org.prevayler.Prevayler;
 import org.prevayler.PrevaylerFactory;
-import org.prevayler.foundation.*;
 
-public class ReplicationTest extends FileIOTest {
+public class ReplicationTest extends PrevalenceTest {
 
 	private Prevayler _server;
 	private Prevayler _client;
@@ -70,7 +68,7 @@ public class ReplicationTest extends FileIOTest {
 		PrevaylerFactory factory = new PrevaylerFactory();
 		factory.configureReplicationServer(PrevaylerFactory.DEFAULT_REPLICATION_PORT + portOffset);
 		factory.configurePrevalentSystem(new AppendingSystem());
-		factory.configurePrevalenceBase(_testDirectory + File.separator + "server");
+		factory.configurePrevalenceBase(_testDirectory + "\\server");
 		factory.configureTransientMode(true);
 		_server = factory.create();
 	}
@@ -79,7 +77,7 @@ public class ReplicationTest extends FileIOTest {
 		PrevaylerFactory factory = new PrevaylerFactory();
 		factory.configureReplicationClient("localhost", PrevaylerFactory.DEFAULT_REPLICATION_PORT + portOffset);
 		factory.configurePrevalentSystem(new AppendingSystem());
-		factory.configurePrevalenceBase(_testDirectory + File.separator + "client");
+		factory.configurePrevalenceBase(_testDirectory + "\\client");
 		_client = factory.create();
 	}
 
@@ -88,7 +86,7 @@ public class ReplicationTest extends FileIOTest {
 		factory.configureReplicationClient("localhost", PrevaylerFactory.DEFAULT_REPLICATION_PORT + remoteServerPortOffset);
 		factory.configureReplicationServer(PrevaylerFactory.DEFAULT_REPLICATION_PORT + serverPortOffset);
 		factory.configurePrevalentSystem(new AppendingSystem());
-		factory.configurePrevalenceBase(_testDirectory + File.separator + "clientWithServer");
+		factory.configurePrevalenceBase(_testDirectory + "\\clientWithServer");
 		_clientWithServer = factory.create();
 	}
 
@@ -105,7 +103,7 @@ public class ReplicationTest extends FileIOTest {
 
 	private String clientValue() {
 		try {
-			Thread.sleep(100);  //The client is notified assynchronously.
+			Thread.sleep(10);  //The client is notified assynchronously.
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

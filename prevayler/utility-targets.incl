@@ -36,8 +36,7 @@
             debug="${build.debug}"
             deprecation="${build.deprecation}"
             optimize="${build.optimize}"
-            verbose="${build.verbose}"
-            includeAntRuntime="false">
+            verbose="${build.verbose}">
             <classpath refid="${compcprefid}" />
         </javac>
 

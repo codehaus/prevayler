@@ -12,21 +12,13 @@ import org.prevayler.Transaction;
 public class TransactionTimestamp implements Serializable {
 
     static final long serialVersionUID = 0L;
-
-	private final Transaction transaction;
-	private final long timestamp;
+	
+	public final Transaction transaction;
+	public final Date timestamp;
 
 	public TransactionTimestamp(Transaction transaction, Date timestamp) {
 		this.transaction = transaction;
-		this.timestamp = timestamp.getTime();
+		this.timestamp = timestamp;
 	}
-
-    public Transaction transaction() {
-        return this.transaction;
-    }
-
-    public Date timestamp() {
-        return new Date(this.timestamp);
-    }
 
 }

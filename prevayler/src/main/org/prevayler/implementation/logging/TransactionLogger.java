@@ -11,7 +11,6 @@ import org.prevayler.Transaction;
 import org.prevayler.foundation.Turn;
 import org.prevayler.implementation.publishing.TransactionSubscriber;
 
-// START SNIPPET: transactionLogger
 public interface TransactionLogger {
 
 	public void log(Transaction transaction, Date executionTime, Turn threadSynchronizationTurn);
@@ -21,4 +20,3 @@ public interface TransactionLogger {
 	public void close() throws IOException;
 
 }
-// END SNIPPET: transactionLogger
