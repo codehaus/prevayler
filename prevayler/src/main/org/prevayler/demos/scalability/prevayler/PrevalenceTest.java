@@ -25,7 +25,7 @@ public class PrevalenceTest {
 
 	static private class PrevalenceFilter implements FileFilter {
 		public boolean accept(File file) {
-			return file.getName().endsWith("journal")
+			return file.getName().endsWith("transactionLog")
 				|| file.getName().endsWith("snapshot")
 				|| file.isDirectory();
 		}

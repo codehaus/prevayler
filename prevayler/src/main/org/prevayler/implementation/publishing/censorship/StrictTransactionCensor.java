@@ -6,7 +6,6 @@
 package org.prevayler.implementation.publishing.censorship;
 
 import org.prevayler.Transaction;
-import org.prevayler.foundation.DeepCopier;
 import org.prevayler.implementation.snapshot.*;
 
 import java.io.ByteArrayInputStream;
@@ -28,7 +27,7 @@ public class StrictTransactionCensor implements TransactionCensor {
 
 	public void approve(Transaction transaction, Date executionTime) throws RuntimeException, Error {
 		try {
-			Transaction transactionCopy = (Transaction)DeepCopier.deepCopy(transaction, _snapshotManager, "Unable to produce a copy of the transaction for trying out before applying it to the real system.");
+			Transaction transactionCopy = (Transaction)_snapshotManager.deepCopy(transaction, "Unable to produce a copy of the transaction for trying out before applying it to the real system.");
 			transactionCopy.executeOn(royalFoodTaster(), executionTime);
 		} catch (RuntimeException rx) {
 			letTheFoodTasterDie();
