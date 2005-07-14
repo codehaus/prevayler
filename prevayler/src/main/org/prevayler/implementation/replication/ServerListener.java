@@ -4,11 +4,10 @@
 
 package org.prevayler.implementation.replication;
 
-import org.prevayler.foundation.network.OldNetwork;
-import org.prevayler.foundation.network.ObjectServerSocket;
-import org.prevayler.implementation.publishing.TransactionPublisher;
-
 import java.io.IOException;
+import java.net.ServerSocket;
+
+import org.prevayler.implementation.publishing.TransactionPublisher;
 
 
 /** Reserved for future implementation.
@@ -16,16 +15,16 @@ import java.io.IOException;
 public class ServerListener extends Thread {
 
 	private final TransactionPublisher _publisher;
-	private final ObjectServerSocket _serverSocket;
+	private final ServerSocket _serverSocket;
 
-	//TODO Close the socket when the publisher is closed (listen for it or have the Dashboard (new idea) close this when it closes the publisher).
-	
-	public ServerListener(TransactionPublisher publisher, OldNetwork network, int port) throws IOException {
-		_serverSocket = network.openObjectServerSocket(port);
+
+	public ServerListener(TransactionPublisher publisher, int port) throws IOException {
+		_serverSocket = new ServerSocket(port);
 		_publisher = publisher;
 		setDaemon(true);
-		start(); //FIXME: Make sure this thread ends when Prevayler is closed.
+		start();
 	} 
+
 
 	public void run() {
 		try {

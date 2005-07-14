@@ -28,10 +28,6 @@
 		<level value="info"/>
 	</logger>-->
 
-    <logger name="org.prevayler">
-		<level value="info"/>
-	</logger>
-
     <!-- Appenders for running JUnit tests -->
     <!-- Using additivity="false" on the "test.org.prevayler"
          logger allows us to exclude the "root" logger levels and appenders 

@@ -4,110 +4,148 @@
 
 package org.prevayler.implementation.publishing;
 
+import java.io.IOException;
+import java.util.Date;
+
 import org.prevayler.Clock;
+import org.prevayler.Transaction;
 import org.prevayler.foundation.Cool;
 import org.prevayler.foundation.Turn;
-import org.prevayler.implementation.Capsule;
-import org.prevayler.implementation.TransactionGuide;
-import org.prevayler.implementation.TransactionTimestamp;
 import org.prevayler.implementation.clock.PausableClock;
-import org.prevayler.implementation.journal.Journal;
-import org.prevayler.implementation.publishing.censorship.TransactionCensor;
-
-import java.io.IOException;
+import org.prevayler.implementation.logging.TransactionLogger;
+import org.prevayler.implementation.publishing.censorship.*;
 
 public class CentralPublisher extends AbstractPublisher {
 
 	private final PausableClock _pausableClock;
 	private final TransactionCensor _censor;
-	private final Journal _journal;
+	private final TransactionLogger _logger;
 
+	private final Object _pendingSubscriptionMonitor = new Object();
 	private volatile int _pendingPublications = 0;
 	private final Object _pendingPublicationsMonitor = new Object();
 
 	private Turn _nextTurn = Turn.first();
-	private long _nextTransaction;
 	private final Object _nextTurnMonitor = new Object();
 
+	private boolean _foodTasterIsDead = false;
+	private int _pipelinedTransactions = 0;
+	private final Object _pipelinedTransactionsMonitor = new Object();
 
-	public CentralPublisher(Clock clock, TransactionCensor censor, Journal journal) {
+
+	public CentralPublisher(Clock clock, TransactionCensor censor, TransactionLogger logger) {
 		super(new PausableClock(clock));
-		_pausableClock = (PausableClock) _clock; //This is just to avoid casting the inherited _clock every time.
+		_pausableClock = (PausableClock)_clock; //This is just to avoid casting the inherited _clock every time.
 
 		_censor = censor;
-		_journal = journal;
+		_logger = logger;
 	}
 
 
-	public void publish(Capsule capsule) {
-		synchronized (_pendingPublicationsMonitor) {  //Blocks all new subscriptions until the publication is over.
-			if (_pendingPublications == 0) _pausableClock.pause();
-			_pendingPublications++;
+	public void publish(Transaction transaction) {
+		synchronized (_pendingSubscriptionMonitor) {  //Blocks all new publications until the subscription is over.
+			synchronized (_pendingPublicationsMonitor) {
+				if (_pendingPublications == 0) _pausableClock.pause();
+				_pendingPublications++;
+			}
 		}
 
 		try {
-			publishWithoutWorryingAboutNewSubscriptions(capsule);  // Suggestions for a better method name are welcome.  :)
+			publishWithoutWorryingAboutNewSubscriptions(transaction);  // Suggestions for a better method name are welcome.  :)
 		} finally {
 			synchronized (_pendingPublicationsMonitor) {
 				_pendingPublications--;
-				if (_pendingPublications == 0) {
-					_pausableClock.resume();
-					_pendingPublicationsMonitor.notifyAll();
+				if (_pendingPublications == 0) _pausableClock.resume();
+			}
+		}
+	}
+
+
+	private void publishWithoutWorryingAboutNewSubscriptions(Transaction transaction) {
+		Turn myTurn = nextTurn();
+
+		Date executionTime = realTime(myTurn);  //TODO realTime() and approve in the same turn.
+		approve(transaction, executionTime, myTurn);
+		_logger.log(transaction, executionTime, myTurn);
+		notifySubscribers(transaction, executionTime, myTurn);
+	}
+
+
+	private Turn nextTurn() {
+		synchronized (_nextTurnMonitor) {
+			Turn result = _nextTurn;
+			_nextTurn = _nextTurn.next();
+			return result;
+		}
+	}
+
+
+	private Date realTime(Turn myTurn) {
+		try {
+			myTurn.start();
+			return _pausableClock.realTime();
+		} finally {	myTurn.end(); }
+	}
+
+
+	private void approve(Transaction transaction, Date executionTime, Turn myTurn) throws RuntimeException, Error {
+		try {
+			myTurn.start();
+
+			if (_foodTasterIsDead) {
+				synchronized (_pipelinedTransactionsMonitor) {
+					while (_pipelinedTransactions > 0) {
+						Cool.wait(_pipelinedTransactionsMonitor);
+					}
 				}
 			}
-		}
-	}
 
+			_censor.approve(transaction, executionTime);
 
-	private void publishWithoutWorryingAboutNewSubscriptions(Capsule capsule) {
-		TransactionGuide guide = approve(capsule);
-		_journal.append(guide);
-		notifySubscribers(guide);
-	}
+			_foodTasterIsDead = false;
 
-	private TransactionGuide approve(Capsule capsule) {
-		synchronized (_nextTurnMonitor) {
-			TransactionTimestamp timestamp = new TransactionTimestamp(capsule, _nextTransaction, _pausableClock.realTime());
-
-			_censor.approve(timestamp);
-
-			// Only count this transaction once approved.
-			Turn turn = _nextTurn;
-			_nextTurn = _nextTurn.next();
-			_nextTransaction++;
-
-			return new TransactionGuide(timestamp, turn);
-		}
-	}
-
-	private void notifySubscribers(TransactionGuide guide) {
-		guide.startTurn();
-		try {
-			_pausableClock.advanceTo(guide.executionTime());
-			notifySubscribers(guide.timestamp());
-		} finally {
-			guide.endTurn();
-		}
-	}
-
-
-	public void subscribe(TransactionSubscriber subscriber, long initialTransaction) throws IOException, ClassNotFoundException {
-		synchronized (_pendingPublicationsMonitor) {
-			while (_pendingPublications != 0) Cool.wait(_pendingPublicationsMonitor);
-
-			_journal.update(subscriber, initialTransaction);
-
-			synchronized (_nextTurnMonitor) {
-				_nextTransaction = _journal.nextTransaction();
+			synchronized (_pipelinedTransactionsMonitor) {
+				_pipelinedTransactions++;
 			}
 
+			myTurn.end();
+		} catch (RuntimeException r) { dealWithError(myTurn); throw r;
+		} catch (Error e) {	dealWithError(myTurn); throw e; }
+	}
+
+	
+	private void dealWithError(Turn myTurn) {
+		_foodTasterIsDead = true;
+		myTurn.alwaysSkip();
+	}
+
+
+	private void notifySubscribers(Transaction transaction, Date executionTime, Turn myTurn) {
+		try {
+			myTurn.start();
+			_pausableClock.advanceTo(executionTime);
+			notifySubscribers(transaction, executionTime);
+
+			synchronized (_pipelinedTransactionsMonitor) {
+				_pipelinedTransactions--;
+				if (_pipelinedTransactions == 0) {
+					_pipelinedTransactionsMonitor.notifyAll();
+				}
+			}
+		} finally {	myTurn.end(); }
+	}
+
+
+	public void addSubscriber(TransactionSubscriber subscriber, long initialTransaction) throws IOException, ClassNotFoundException {
+		synchronized (_pendingSubscriptionMonitor) {
+			while (_pendingPublications != 0) Thread.yield();
+			
+			_logger.update(subscriber, initialTransaction);
 			super.addSubscriber(subscriber);
 		}
 	}
 
 
-	public void close() throws IOException {
-		_journal.close();
-	}
+	public void close() throws IOException { _logger.close(); }
 
 }

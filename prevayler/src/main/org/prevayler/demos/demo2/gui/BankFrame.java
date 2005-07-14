@@ -1,11 +1,15 @@
 package org.prevayler.demos.demo2.gui;
 
-import org.prevayler.Prevayler;
-import org.prevayler.foundation.Cool;
-
-import javax.swing.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+
+import javax.swing.Box;
+import javax.swing.JDesktopPane;
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.JLabel;
+
+import org.prevayler.Prevayler;
 
 public class BankFrame extends JFrame {
 
@@ -21,7 +25,7 @@ public class BankFrame extends JFrame {
 		setContentPane(desktop);
 		new AllAccountsFrame(prevayler, desktop);
 		desktop.add(new RobustnessFrame());
-		desktop.add(new MatchFrame(prevayler));
+		
 		setBounds(40,40,550,420);
 		setVisible(true);
 
@@ -35,7 +39,7 @@ public class BankFrame extends JFrame {
 				while (true) {
 					DateFormat format = new SimpleDateFormat("hh:mm:ss");
 					setTitle("Bank - " + format.format(_prevayler.clock().time()));
-					Cool.sleep(500);
+					try { Thread.sleep(500); } catch (InterruptedException e) {}
 				}
 			}
 		};

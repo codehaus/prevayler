@@ -2,20 +2,21 @@
 //Copyright (C) 2001-2003 Klaus Wuestefeld
 //This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-package org.prevayler.foundation;
+package org.prevayler.implementation;
 
 import java.io.File;
+import java.io.FileFilter;
 
 import junit.framework.TestCase;
 
 
-public abstract class FileIOTest extends TestCase {
+public abstract class PrevalenceTest extends TestCase {
 
 	protected String _testDirectory;
 	static private long counter = 0;
 
 	protected void setUp() throws Exception {
-		File tempFile = new File("Test" + System.currentTimeMillis() + counter++);
+		File tempFile = new File("PrevalenceBase" + System.currentTimeMillis() + counter++);
 		assertTrue("Unable to create directory " + tempFile, tempFile.mkdirs());
 		_testDirectory = tempFile.getAbsolutePath();
 	}
@@ -32,7 +33,7 @@ public abstract class FileIOTest extends TestCase {
 	    delete(new File(fileName));
 	}
 
-	protected static void delete(File file) {
+	static private void delete(File file) {
 	    if (file.isDirectory()) deleteDirectoryContents(file);
 	    if (!file.delete()) {
 	    	System.gc();
@@ -41,8 +42,17 @@ public abstract class FileIOTest extends TestCase {
 	}
 
 	static private void deleteDirectoryContents(File directory) {
-		File[] files = directory.listFiles();
+		File[] files = directory.listFiles(new PrevalenceFileFilter());
 		if (files == null) return;
 	    for (int i = 0; i < files.length; i++) delete(files[i]);
 	}
+
+	static private class PrevalenceFileFilter implements FileFilter {
+		public boolean accept(File file) {
+			return file.getName().endsWith("transactionLog")
+				|| file.getName().endsWith("snapshot")
+				|| file.isDirectory();
+		}
+	}
+
 }

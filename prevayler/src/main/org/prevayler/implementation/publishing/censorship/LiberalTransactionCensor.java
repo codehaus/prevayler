@@ -4,11 +4,13 @@
 
 package org.prevayler.implementation.publishing.censorship;
 
-import org.prevayler.implementation.TransactionTimestamp;
+import java.util.Date;
+
+import org.prevayler.Transaction;
 
 public class LiberalTransactionCensor implements TransactionCensor {
 
-	public void approve(TransactionTimestamp transactionTimestamp) throws RuntimeException, Error {
+	public void approve(Transaction transaction, Date executionTime) throws RuntimeException, Error {
 	}
 
 }

@@ -4,18 +4,12 @@
 
 package org.prevayler.implementation;
 
-import org.prevayler.Prevayler;
-import org.prevayler.PrevaylerFactory;
-import org.prevayler.foundation.Cool;
-import org.prevayler.foundation.FileIOTest;
-import org.prevayler.foundation.network.NetworkMock;
-
-import java.io.File;
 import java.io.IOException;
 
-public class ReplicationTest extends FileIOTest {
+import org.prevayler.Prevayler;
+import org.prevayler.PrevaylerFactory;
 
-	private static final NetworkMock NETWORK_MOCK = new NetworkMock();
+public class ReplicationTest extends PrevalenceTest {
 
 	private Prevayler _server;
 	private Prevayler _client;
@@ -31,33 +25,8 @@ public class ReplicationTest extends FileIOTest {
 		serverAppend("e", "abcde");
 
 		clientCrashRecover(0);
-		assertEquals("abcde", clientValue());
-
 		clientAppend("f", "abcdef");
 		serverAppend("g", "abcdefg");
-
-		networkCrash();
-		threadToRestartNetworkAfterAWhile().start();
-		_server.execute(new Appendix("h"));
-		clientAppend("i", "abcdefghi");  //Blocks until the network is restarted.
-		
-		serverAppend("j", "abcdefghij");
-		clientAppend("k", "abcdefghijk");
-	}
-
-
-	private void networkCrash() {
-		//TODO NETWORK_MOCK.crash();    Implement a FaultTolerantNetwork so Prevayler doesn't have to worry about it. (!!!!)
-	}
-
-
-	private Thread threadToRestartNetworkAfterAWhile() {
-		return new Thread() {
-			public void run() {
-				Cool.sleep(300);
-				//TODO NETWORK_MOCK.recover();
-			}
-		};
 	}
 
 	public void testClientFirst() throws Exception {
@@ -68,7 +37,7 @@ public class ReplicationTest extends FileIOTest {
 		serverAppend("c", "abc");
 	}
 
-/* //TODO Test replication chaining.
+/* TODO Test replication chaining.
 	public void testChaining() throws Exception {
 		serverCrashRecover(2);
 		clientWithServerCrashRecover(2, 3);
@@ -78,10 +47,8 @@ public class ReplicationTest extends FileIOTest {
 		serverAppend("c", "abc");
 	}
 */
-	
-//	 TODO Test Prevayler.execute() on the "clientWithServer" (middle of the replication chain).
 
-	
+
 	private void serverAppend(String appendix, String expectedResult) {
 		append(_server, appendix, expectedResult);
 	}
@@ -92,41 +59,38 @@ public class ReplicationTest extends FileIOTest {
 
 	private void append(Prevayler prevayler, String appendix, String expectedResult) {
 		prevayler.execute(new Appendix(appendix));
-		Cool.sleep(10);
+		try { Thread.sleep(10);	} catch (InterruptedException ignored) { }
 		assertEquals(expectedResult, serverValue());
 		assertEquals(expectedResult, clientValue());
 	}
 
 	private void serverCrashRecover(int portOffset) throws Exception {
-		PrevaylerFactory factory = factory("server");
+		PrevaylerFactory factory = new PrevaylerFactory();
 		factory.configureReplicationServer(PrevaylerFactory.DEFAULT_REPLICATION_PORT + portOffset);
+		factory.configurePrevalentSystem(new AppendingSystem());
+		factory.configurePrevalenceBase(_testDirectory + "\\server");
 		factory.configureTransientMode(true);
 		_server = factory.create();
 	}
 	
 	private void clientCrashRecover(int portOffset) throws Exception {
-		PrevaylerFactory factory = factory("client");
+		PrevaylerFactory factory = new PrevaylerFactory();
 		factory.configureReplicationClient("localhost", PrevaylerFactory.DEFAULT_REPLICATION_PORT + portOffset);
+		factory.configurePrevalentSystem(new AppendingSystem());
+		factory.configurePrevalenceBase(_testDirectory + "\\client");
 		_client = factory.create();
 	}
 
 	private void clientWithServerCrashRecover(int remoteServerPortOffset, int serverPortOffset) throws IOException, ClassNotFoundException {
-		PrevaylerFactory factory = factory("clientWithServer");
+		PrevaylerFactory factory = new PrevaylerFactory();
 		factory.configureReplicationClient("localhost", PrevaylerFactory.DEFAULT_REPLICATION_PORT + remoteServerPortOffset);
 		factory.configureReplicationServer(PrevaylerFactory.DEFAULT_REPLICATION_PORT + serverPortOffset);
+		factory.configurePrevalentSystem(new AppendingSystem());
+		factory.configurePrevalenceBase(_testDirectory + "\\clientWithServer");
 		_clientWithServer = factory.create();
 	}
 
-    private PrevaylerFactory factory(String directory) {
-		PrevaylerFactory factory = new PrevaylerFactory();
-		factory.configurePrevalentSystem(new AppendingSystem());
-		factory.configurePrevalenceDirectory(_testDirectory + File.separator + directory);
-		factory.configureNetwork(NETWORK_MOCK);
-		return factory;
-	}
-
-
-	protected void tearDown() throws Exception {
+    protected void tearDown() throws Exception {
 		_server = null;
 		_client = null;
 		_clientWithServer = null;
@@ -138,7 +102,11 @@ public class ReplicationTest extends FileIOTest {
 	}
 
 	private String clientValue() {
-		Cool.sleep(100);  //The client is notified assynchronously.
+		try {
+			Thread.sleep(100);  //The client is notified assynchronously.
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		return ((AppendingSystem)_client.prevalentSystem()).value();
 	}
 

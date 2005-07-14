@@ -4,14 +4,12 @@
 
 package org.prevayler.implementation.replication;
 
-import java.io.IOException;
+import java.io.*;
+import java.net.Socket;
+import java.util.Date;
 
-import org.prevayler.foundation.network.ObjectSocket;
-import org.prevayler.implementation.Capsule;
-import org.prevayler.implementation.TransactionTimestamp;
-import org.prevayler.implementation.publishing.POBox;
-import org.prevayler.implementation.publishing.TransactionPublisher;
-import org.prevayler.implementation.publishing.TransactionSubscriber;
+import org.prevayler.Transaction;
+import org.prevayler.implementation.publishing.*;
 
 
 /** Reserved for future implementation.
@@ -20,74 +18,63 @@ class ServerConnection extends Thread implements TransactionSubscriber {
 
 	static final String SUBSCRIBER_UP_TO_DATE = "SubscriberUpToDate";
 	static final String REMOTE_TRANSACTION = "RemoteTransaction";
+	static final String CLOCK_TICK = "ClockTick";
 
 	private final TransactionPublisher _publisher;
-	private Capsule _remoteCapsule;
+	private Transaction _remoteTransaction;
 
-	private final ObjectSocket _remote;
-	private final Thread _clockTickSender = createClockTickSender();
-	private boolean _isClosing = false;
+	private final ObjectOutputStream _toRemote;
+	private final ObjectInputStream _fromRemote;
 
 
-	ServerConnection(TransactionPublisher publisher, ObjectSocket remoteSocket) throws IOException {
+	ServerConnection(TransactionPublisher publisher, Socket remoteSocket) throws IOException {
 		_publisher = publisher;
-		_remote = remoteSocket;
+		_fromRemote = new ObjectInputStream(remoteSocket.getInputStream());
+		_toRemote = new ObjectOutputStream(remoteSocket.getOutputStream());
 		setDaemon(true);
 		start();
 	}
 
 
-
 	public void run() {
 		try {		
-			long initialTransaction = ((Long)_remote.readObject()).longValue();
-			
-			POBox poBox = new POBox(this);
-			_publisher.subscribe(poBox, initialTransaction);
-			poBox.waitToEmpty();
-			
+			long initialTransaction = ((Long)_fromRemote.readObject()).longValue();
+			_publisher.addSubscriber(new POBox(this), initialTransaction);
 			send(SUBSCRIBER_UP_TO_DATE);
 			
-			startSendingClockTicks();
+			sendClockTicks();
 			while (true) publishRemoteTransaction();
-		} catch (IOException ex) {
-			close();
-		} catch (ClassNotFoundException ex) {
-			close();
+		} catch (Exception ex) {
+			ex.printStackTrace();
 		}
 	}
 
 
-	private void startSendingClockTicks() {
-		_clockTickSender.setDaemon(true);
-		_clockTickSender.start();
-	}
-
-
-	private Thread createClockTickSender() {
-		return new Thread() { //TODO Consider using TimerTask.
-					public void run() {
-						try {
-							while (true) {
-								synchronized (_remote) {
-									_remote.writeObject(_publisher.clock().time());
-								}
-								Thread.sleep(1000);
-							}
-						} catch (InterruptedException ix) {
-						} catch (IOException iox) {
-							close();
+	private void sendClockTicks() {
+		Thread clockTickSender = new Thread() {
+			public void run() {
+				try {
+					while (true) {
+						synchronized (_toRemote) {
+							_toRemote.writeObject(CLOCK_TICK);
+							_toRemote.writeObject(_publisher.clock().time());
 						}
+						Thread.sleep(1000);
 					}
-				};
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+			}
+		};
+		clockTickSender.setDaemon(true);
+		clockTickSender.start();
 	}
 
 
-
-	void publishRemoteTransaction() throws IOException, ClassNotFoundException {
-		_remoteCapsule = (Capsule)_remote.readObject();
+	void publishRemoteTransaction() throws Exception {
+		_remoteTransaction = (Transaction)_fromRemote.readObject();
 		try {
-			_publisher.publish(_remoteCapsule);
+			_publisher.publish(_remoteTransaction);
 		} catch (RuntimeException rx) {
 			send(rx);
 		} catch (Error error) {
@@ -96,33 +83,25 @@ class ServerConnection extends Thread implements TransactionSubscriber {
 	}
 
 
-	public void receive(TransactionTimestamp tt) {
-		
-		if (tt.capsule() == _remoteCapsule)
-			tt = new TransactionTimestamp(null, tt.systemVersion(), tt.executionTime()); //TODO This is really ugly. It is using a null capsule inside the TransactionTimestamp to signal that the remote Capsule should be executed.
-		
+	public void receive(Transaction transaction, Date timestamp) {
 		try {
-			synchronized (_remote) {
-				_remote.writeObject(tt);
+			synchronized (_toRemote) {
+				_toRemote.writeObject(transaction == _remoteTransaction
+					? (Object)REMOTE_TRANSACTION
+					: transaction
+				);
+				_toRemote.writeObject(timestamp);
 			}
-		} catch (IOException ex) {
-			close();
+		} catch (Exception ex) {
+			ex.printStackTrace();
 		}
 	}
 
 
-	private synchronized void close() {
-		_clockTickSender.interrupt();
-		this.interrupt();
-		_publisher.cancelSubscription(this);
-	}
-
-
-
 	private void send(Object object) {
-		synchronized (_remote) {
+		synchronized (_toRemote) {
 			try {
-				_remote.writeObject(object);
+				_toRemote.writeObject(object);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

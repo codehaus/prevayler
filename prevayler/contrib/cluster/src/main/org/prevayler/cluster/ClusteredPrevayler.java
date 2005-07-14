@@ -39,7 +39,7 @@ public class ClusteredPrevayler implements Prevayler, ClusterListener {
             factory.configurePrevalentSystem(prevalentSystem);
         }
         try {
-            factory.configurePrevalenceDirectory(newPrevalenceBase);
+            factory.configurePrevalenceBase(newPrevalenceBase);
             prevayler = factory.create();
             System.out.println("Setting new system " + prevayler.prevalentSystem());
             System.out.println("Taking snapshot");
@@ -69,10 +69,6 @@ public class ClusteredPrevayler implements Prevayler, ClusterListener {
     }
 
     public Object execute(TransactionWithQuery transactionWithQuery) throws Exception {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    public Object execute(SureTransactionWithQuery sureTransactionWithQuery) {
         throw new UnsupportedOperationException("Not implemented");
     }
 

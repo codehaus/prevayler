@@ -20,9 +20,9 @@ public class PausableClock implements Clock {
 		resume();
 	}
 
-	public synchronized Date time() { return _activeClock.time(); }
+	public Date time() { return _activeClock.time(); }
 
-	public synchronized void pause() {
+	public void pause() {
 		advanceTo(_realClock.time());
 		_activeClock = _brokenClock;
 	}
@@ -31,7 +31,7 @@ public class PausableClock implements Clock {
 		_brokenClock.advanceTo(time);
 	}
 
-	public synchronized void resume() { _activeClock = _realClock; }
+	public void resume() { _activeClock = _realClock; }
 
 	public Date realTime() { return _realClock.time(); }
 }

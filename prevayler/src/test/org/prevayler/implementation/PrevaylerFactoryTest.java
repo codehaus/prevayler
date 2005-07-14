@@ -9,10 +9,9 @@ import java.io.Serializable;
 
 import org.prevayler.Prevayler;
 import org.prevayler.PrevaylerFactory;
-import org.prevayler.foundation.*;
 
 
-public class PrevaylerFactoryTest extends FileIOTest {
+public class PrevaylerFactoryTest extends PrevalenceTest {
 
 	private static final Serializable POJO = new Serializable() {}; 
 

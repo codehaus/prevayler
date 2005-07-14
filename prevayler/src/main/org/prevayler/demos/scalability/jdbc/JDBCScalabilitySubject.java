@@ -4,7 +4,6 @@ package org.prevayler.demos.scalability.jdbc;
 
 import org.prevayler.demos.scalability.*;
 import java.sql.*;
-import java.io.PrintStream;
 
 
 abstract class JDBCScalabilitySubject implements ScalabilityTestSubject {
@@ -47,8 +46,4 @@ abstract class JDBCScalabilitySubject implements ScalabilityTestSubject {
 			throw new RuntimeException("Exception while trying to connect: " + sqlx);
 		}
 	}
-
-	public void reportResourcesUsed(PrintStream out) {
-	}
-
 }
