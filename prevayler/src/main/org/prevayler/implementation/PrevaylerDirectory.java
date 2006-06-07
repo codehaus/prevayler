@@ -91,9 +91,9 @@ public class PrevaylerDirectory {
 	/**
 	 * Find the latest snapshot file. Returns null if no snapshot file was found.
 	 */
-	public File latestSnapshot() {
+	public File latestSnapshot() throws IOException {
 		File[] files = _directory.listFiles();
-		if (files == null) return null;
+		if (files == null) throw new IOException("Error reading file list from directory " + _directory);
 
 		File latestSnapshot = null;
 		long latestVersion = 0;

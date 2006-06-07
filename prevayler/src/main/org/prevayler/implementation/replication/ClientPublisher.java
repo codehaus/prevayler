@@ -4,18 +4,17 @@
 
 package org.prevayler.implementation.replication;
 
-import java.io.IOException;
-import java.util.Date;
-
 import org.prevayler.Clock;
-import org.prevayler.foundation.Cool;
-import org.prevayler.foundation.network.ObjectSocket;
 import org.prevayler.foundation.network.OldNetwork;
+import org.prevayler.foundation.network.ObjectSocket;
 import org.prevayler.implementation.Capsule;
 import org.prevayler.implementation.TransactionTimestamp;
 import org.prevayler.implementation.clock.BrokenClock;
 import org.prevayler.implementation.publishing.TransactionPublisher;
 import org.prevayler.implementation.publishing.TransactionSubscriber;
+
+import java.io.IOException;
+import java.util.Date;
 
 
 /** Reserved for future implementation.
@@ -57,12 +56,12 @@ public class ClientPublisher implements TransactionPublisher {
 	}
 
 
-	public synchronized void subscribe(TransactionSubscriber subscriber, long initialTransaction) throws IOException {
+	public synchronized void subscribe(TransactionSubscriber subscriber, long initialTransaction) throws IOException, ClassNotFoundException {
 		if (_subscriber != null) throw new UnsupportedOperationException("The current implementation can only support one subscriber. Future implementations will support more.");
 		_subscriber = subscriber;
 		synchronized (_upToDateMonitor) {
 			_server.writeObject(new Long(initialTransaction));
-			Cool.wait(_upToDateMonitor);
+			wait(_upToDateMonitor);
 		}
 	}
 
@@ -84,7 +83,7 @@ public class ClientPublisher implements TransactionPublisher {
 				iox.printStackTrace();
 				while (true) Thread.yield();  //Remove all exceptions when using StubbornNetwork.
 			}
-			Cool.wait(_myCapsuleMonitor);
+			wait(_myCapsuleMonitor);
 			
 			throwEventualErrors();
 		}
@@ -141,6 +140,16 @@ public class ClientPublisher implements TransactionPublisher {
 
 		_subscriber.receive(new TransactionTimestamp(transactionTimestamp.capsule(), systemVersion, timestamp));
 	}
+
+
+	private static void wait(Object monitor) {
+		try {
+			monitor.wait();
+		} catch (InterruptedException ix) {
+			throw new RuntimeException("Unexpected InterruptedException.");
+		}
+	}
+
 
 	private void notifyMyTransactionMonitor() {
 		synchronized (_myCapsuleMonitor) {

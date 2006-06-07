@@ -69,7 +69,7 @@ public class GenericSnapshotManager {
 
 		File permanent = snapshotFile(version);
 		permanent.delete();
-		if (!tempFile.renameTo(permanent)) throw new SnapshotException(
+		if (!tempFile.renameTo(permanent)) throw new IOException(
 				"Temporary snapshot file generated: " + tempFile + "\nUnable to rename it permanently to: " + permanent);
 	}
 
@@ -89,7 +89,7 @@ public class GenericSnapshotManager {
 
 	private Object readSnapshot(File snapshotFile) throws ClassNotFoundException, IOException {
 		String suffix = snapshotFile.getName().substring(snapshotFile.getName().indexOf('.') + 1);
-		if (!_strategies.containsKey(suffix)) throw new SnapshotException(
+		if (!_strategies.containsKey(suffix)) throw new IOException(
 				snapshotFile.toString() + " cannot be read; only " + _strategies.keySet().toString() + " supported");
 
 		Serializer serializer = (Serializer) _strategies.get(suffix);

@@ -51,10 +51,9 @@ public abstract class BaseNetworkImpl implements Network, NetworkReceiverFactory
 
     private void checkPortNotUsed(int port) throws IOException {
         if (_servicesInUse.get(new Integer(port)) != null) {
-            throw new PortInServiceException("Port In Service");
+            throw new IOException("Port In Service");
         }
     }
-
     private void releasePortForReuse(int port) {
         _servicesInUse.remove(new Integer(port));
     }
@@ -70,11 +69,10 @@ public abstract class BaseNetworkImpl implements Network, NetworkReceiverFactory
     private NetworkServerObjectReceiver locateService(int port) throws IOException{
         NetworkServerObjectReceiver service = (NetworkServerObjectReceiver) _servicesInUse.get(new Integer(port));
         if (service == null) {
-            throw new PortNotInServiceException("Port Not in Service");
+            throw new IOException("Port Not in Service");
         }
         return service;
     }
-
     public abstract ObjectReceiver newReceiver(Service service, ObjectSocket socket) throws IOException;
 
     public abstract ObjectReceiver newReceiver(String ipAddress, int port, ObjectReceiver client) throws IOException;

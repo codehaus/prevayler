@@ -17,7 +17,7 @@ public class NullSnapshotManager extends GenericSnapshotManager {
 	}
 
 	public void writeSnapshot(Object prevalentSystem, long version) throws IOException {
-		throw new SnapshotException(_snapshotAttemptErrorMessage);
+		throw new IOException(_snapshotAttemptErrorMessage);
 	}
 
 }
